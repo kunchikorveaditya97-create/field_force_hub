@@ -1,162 +1,150 @@
-# \# Field Force Hub
+# Field Force Hub
 
-# 
+A Flutter mobile app for field task and visit tracking. The app implements role-based access for five user types, task and visit tracking, an activity timeline, and a mocked AI module that analyzes visit notes.
 
-# A robust, enterprise-grade \*\*Field Force Management System\*\* built using Flutter. The architecture is cleanly designed to handle distributed task execution, permission-aware workflows, dynamic mock AI diagnostics, and offline data caching.
+---
 
-# 
+## 1. Prerequisites
 
-# \---
+Before setting up the project, make sure the following are installed:
 
-# 
+| Requirement | Minimum Version | Notes |
+|---|---|---|
+| Flutter SDK | 3.10+ (Dart 3.0+) | [flutter.dev/docs/get-started/install](https://flutter.dev/docs/get-started/install) |
+| Dart SDK | Bundled with Flutter | — |
+| Android Studio or VS Code | Latest | With Flutter & Dart plugins installed |
+| Android SDK / Platform Tools | API 21+ | Installed via Android Studio SDK Manager |
+| Java Development Kit (JDK) | 17 | Required for Gradle/Android builds |
+| Git | Latest | To clone the repository |
+| Android Emulator or physical device | Android 5.0 (API 21) and above | For running/testing the app |
+| Xcode (optional) | Latest | Only needed if testing on iOS/macOS |
 
-# \## 🚀 Core Features
+Run `flutter doctor` after installation to confirm your environment is correctly configured.
 
-# 
+No paid services, API keys, or backend servers are required — the app runs entirely offline using a local seeded data layer.
 
-# \* \*\*Role-Based Access Control (RBAC):\*\* Restricts data layers and actions dynamically matching specific organizational responsibilities (Admin, Regional Manager, Team Lead, Field Agent, and Auditor).
+---
 
-# \* \*\*Task Lifecycle Dispatcher:\*\* Live status grid updates paired with dropdown visibility filter selectors.
+## 2. Project Overview
 
-# \* \*\*Visit Tracking Tracking \& Audit Forms:\*\* Interactive structured entry layouts mapped with real-time text validation boundaries.
+Field Force Hub simulates a field operations workflow where:
+- **Admins, Regional Managers, and Team Leads** oversee and manage field tasks.
+- **Field Agents** execute on-ground visits and submit audit/visit reports.
+- **Auditors** review and validate field execution.
 
-# \* \*\*Mock AI Insight Engine:\*\* Deterministic keyword scanning abstraction that flags system vulnerabilities (Normal, Warning, Critical) and computes adaptive recommendations based on field inputs.
+Core flows include authentication with role-based routing, a task list with status filters, a visit-report submission form, a mocked AI engine that evaluates submitted notes, and a live activity timeline across all tasks.
 
-# \* \*\*Dynamic Time-Elapsed Activity Logs:\*\* Authentic runtime telemetry counters displaying logs in user-friendly formats (\*e.g., "Just now", "5 mins ago", "1 hour ago"\*).
+---
 
-# \* \*\*Offline Local Persistence:\*\* Native device storage caching system managed via Hive boxes ensuring data survives cold restarts.
+## 3. Tech Stack
 
-# 
+| Layer | Choice |
+|---|---|
+| Framework | Flutter |
+| State Management | GetX (reactive state + dependency injection + navigation) |
+| Local Persistence | Hive (`hive_flutter`) — used as the offline data layer instead of a remote backend |
+| Mock AI | Deterministic, rule-based logic (keyword matching on visit notes) implemented as a dedicated method in the controller layer |
 
-# \---
+---
 
-# 
+## 4. Setup & Installation
 
-# \## 🛠️ Tech Stack Matrix
+```bash
+# 1. Clone the repository
+git clone (https://github.com/kunchikorveaditya97-create/field_force_hub.git)
+cd field_force_hub
 
-# 
+# 2. Install dependencies
+flutter pub get
 
-# | Architectural Layer | Core Technology / Package Framework |
+# 3. Run on a connected device or emulator
+flutter run
 
-# | :--- | :--- |
+# 4. (Optional) Build a release APK for distribution
+flutter build apk --release
+# Output: build/app/outputs/flutter-apk/app-release.apk
+```
 
-# | \*\*Mobile Framework\*\* | Flutter Rendering SDK |
+No backend setup is required — `Hive` initializes a local box (`field_tasks_box`) on first launch and auto-seeds dummy task data.
 
-# | \*\*State Management\*\* | GetX State Architecture Pipeline (`Reactive State \& Obx`) |
+---
 
-# | \*\*Local Data Storage\*\* | Hive Binary NoSQL Key-Value Local Blocks |
+## 5. Demo Credentials
 
-# | \*\*Navigation Wrapper\*\* | Material Navigation Shell Structure |
+Use any of the following on the login screen :
 
-# 
+| Role | Login ID | Password |
+|---|---|---|
+| Admin | `admin` | `admin123` |
+| Regional Manager | `manager` | `manager123` |
+| Team Lead | `lead` | `lead123` |
+| Field Agent | `agent` | `agent123` |
+| Auditor | `auditor` | `auditor123` |
 
-# \---
+---
 
-# 
+## 6. Sample / Dummy Data
 
-# \## 📁 System Directory Framework
+On first run, two seeded field tasks (`TSK-9021`, `TSK-4082`) are created automatically in Hive, each with site name, location, priority, status, and an initial activity timeline. All data persists locally across app restarts, so reviewers can submit a visit report, close the app, and see the change retained on relaunch.
 
-# 
+---
 
-# ```text
+## 7. Core Modules Implemented
 
-# lib/
+- **Authentication & Role Routing** — Login screen validates against 5 fixed demo accounts and routes into a role-aware dashboard.
+- **Task Management** — Task list with filtering by status (`All`, `Pending`, `In-Progress`, `Completed`); Admin/Manager/Team Lead see an additional "privileged scope" banner indicating cross-team visibility.
+- **Visit Reporting** — A dedicated report form lets the assigned user submit visit notes, which triggers status update and mock AI evaluation.
+- **Activity / History Timeline** — A dedicated tab renders a chronological log per task (task assigned, report compiled, etc.) with human-readable relative timestamps ("2 hours ago").
 
-# ├── controllers/
+---
 
-# │   └── task\_controller.dart      # Business logic wrapper \& time-elapsed parser
+## 8. Mock AI Design
 
-# ├── data/
+The mock AI logic lives in `TaskController.submitFieldAuditLogs()`, isolated from the UI layer so it can later be swapped for a real LLM/AI service without touching screens.
 
-# │   └── task\_model.dart            # Native data schemas \& Hive initialization structures
+**Behavior:** when a visit report is submitted, the notes are scanned for keywords and a flag + summary are generated deterministically:
 
-# └── screens/
+| Keywords detected in notes | AI Flag | Output |
+|---|---|---|
+| none of the below | `Normal` | Generic "parameters match reference metrics" summary |
+| `broken`, `fault`, `error` | `Warning` | Component failure flagged in report |
+| `theft`, `damage`, `danger`, `fire` | `Critical` | Safety hazard flagged, immediate check recommended |
 
-# &#x20;   ├── login\_screen.dart          # Role gateway authentication interface panel
+Both the original visit notes and the generated AI flag/summary are stored on the `FieldTask` model and persisted to Hive, then displayed back to the user on the Reports tab once a task is marked `Completed`.
 
-# &#x20;   ├── main\_navigation.dart       # Unified multi-tab dashboard layout core shell
+---
 
-# &#x20;   ├── reports\_tab.dart           # Mock AI diagnostic calculation interface
+## 9. Folder Structure
 
-# &#x20;   └── tasks\_tab.dart             # Filter-enabled operational lists renderer
+```
+lib/
+├── main.dart                  # App entry point, Hive init, GetMaterialApp root
+├── controllers/
+│   └── task_controller.dart   # GetX controller: state, mock AI logic, time formatting
+├── data/
+│   └── task_model.dart        # FieldTask & ActivityLog models + HiveStorageBridge
+└── screens/
+    ├── splash_screen.dart     # Animated splash
+    ├── login_screen.dart      # Auth + role mapping
+    ├── main_navigation.dart   # Bottom-nav shell: dashboard, tasks, reports, timeline
+    ├── tasks_tab.dart         # Task list with status filter + role-aware banner
+    └── reports_tab.dart       # Visit report submission + AI output display
+```
 
+---
 
+## 10. Architecture Notes
 
+- **State management:** GetX was chosen for its low boilerplate — a single `TaskController` is registered once via `Get.put()` at login and retrieved with `Get.find()` across screens, with `Obx()` widgets reacting to the observable `tasks`, `currentRole`, and `username` streams.
+- **Data layer:** Hive acts as the persistence layer in place of a remote backend, in line with the assignment's "minimal backend" allowance. All task and timeline data is serialized to/from `Map` objects for storage.
+- **Separation of concerns:** UI screens contain no business logic; task mutation and AI evaluation are centralized in `TaskController`, and storage read/write is centralized in `HiveStorageBridge`.
+- **Role-based access:** Role string is stored on the controller after login and read by each screen to conditionally render management banners and gate features (e.g., management-only banner in Tasks tab).
 
+---
 
-\---
+## 11. Assumptions & Tradeoffs
 
-
-
-\## 🔑 Access Control \& Permissions Matrix
-
-
-
-| Operational Capability | Admin | Regional Manager | Team Lead | Field Agent | Auditor |
-
-| :--- | :---: | :---: | :---: | :---: | :---: |
-
-| \*\*Create/Dispatch Tasks\*\* | ✅ | ✅ | ✅ | ❌ | ❌ |
-
-| \*\*View Cross-Team Logs\*\* | ✅ | ✅ | ❌ | ❌ | ❌ |
-
-| \*\*View Assigned Team Run\*\* | ✅ | ✅ | ✅ | ✅ | ❌ |
-
-| \*\*Execute Site Audit Visits\*\*| ✅ | ✅ | ✅ | ✅ | ❌ |
-
-| \*\*View Audit Logs Timeline\*\* | ❌ | ❌ | ❌ | ❌ | ✅ |
-
-| \*\*View Management Reports\*\* | ✅ | ✅ | ❌ | ❌ | ✅ |
-
-
-
-\---
-
-
-
-\## 🔐 Reviewer Testing Credentials Matrix
-
-
-
-Use the following authentic demo profile layers inside the secure login gateway form to explore role-specific behaviors and layout mutations:
-
-
-
-\* \*\*Role 1 — Corporate Admin:\*\* `Username: admin` | `Password: admin123`
-
-\* \*\*Role 2 — Regional Manager:\*\* `Username: manager` | `Password: manager123`
-
-\* \*\*Role 3 — Operations Team Lead:\*\* `Username: lead` | `Password: lead123`
-
-\* \*\*Role 4 — Active Field Force Agent:\*\* `Username: agent` | `Password: agent123`
-
-\* \*\*Role 5 — Compliance Auditor:\*\* `Username: auditor` | `Password: auditor123`
-
-
-
-\---
-
-
-
-\## ⚙️ Local Development Setup Instructions
-
-
-
-\### Prerequisites
-
-Make sure your computer station has the following framework engines initialized:
-
-\* \*\*Flutter SDK:\*\* Version `3.0.0` or higher
-
-\* \*\*Dart SDK:\*\* Version `3.0.0` or higher
-
-
-
-\### Initialization Commands
-
-1\. Clone this enterprise repository block to your local machine:
-
-&#x20;  ```bash
-
-&#x20;  git clone \[https://github.com/TUMHARA\_USERNAME/field\_force\_hub.git](https://github.com/TUMHARA\_USERNAME/field\_force\_hub.git)
-
+- Task **creation/reassignment** UI for Admin/Manager/Team Lead is not implemented in this version; tasks are pre-seeded and only their status/notes are updated via the visit-report flow. This was a scope tradeoff given the assignment timeframe.
+- Authentication is a static, hardcoded 5-account check rather than a real auth service, consistent with the "minimal backend" and "no paid services" requirements.
+- The AI module is intentionally simple and rule-based (keyword matching) so it can be swapped for a real AI/LLM service later without changing the calling code in the UI.
+- Search/sort and automated test coverage (listed as bonus items) were deprioritized in favor of completing the core required flows.
